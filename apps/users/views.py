@@ -19,6 +19,14 @@ class ProfileViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         # Restrict queryset to only the current user's profile.
         return Profile.objects.filter(user=self.request.user)
+    
+    def list(self, request, *args, **kwargs):
+        # There's only one profile per user. We fetch it.
+        profile = self.get_queryset().first()
+        if not profile:
+            return Response({"detail": "No profile found."}, status=404)
+        serializer = self.get_serializer(profile)
+        return Response(serializer.data)
 
     def perform_update(self, serializer):
         # Enforce that the profile belongs to the current user.
