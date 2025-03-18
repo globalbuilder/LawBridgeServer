@@ -16,10 +16,10 @@ class ProfileSerializer(serializers.ModelSerializer):
     Serializer for Profile that allows updating of the nested User fields:
     first_name, last_name, and email.
     """
-    # Declare these fields so we can update them directly.
+    # 'source="user.first_name"' => these fields must be in "user": {...} in JSON
     first_name = serializers.CharField(source='user.first_name')
     last_name = serializers.CharField(source='user.last_name')
-    email = serializers.EmailField(source='user.email', required=False, allow_blank=True)
+    email = serializers.EmailField(source='user.email', required=False, allow_blank=True, allow_null=True)
 
     class Meta:
         model = Profile
@@ -27,13 +27,19 @@ class ProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
     def update(self, instance, validated_data):
-        # Extract nested user data
-        user_data = validated_data.pop('user', {})
+        # Extract nested user data if present
+        user_data = validated_data.pop('user', None)
         user = instance.user
-        user.first_name = user_data.get('first_name', user.first_name)
-        user.last_name = user_data.get('last_name', user.last_name)
-        user.email = user_data.get('email', user.email)
-        user.save()
+
+        if user_data:  # Only update user if we have user_data
+            if 'first_name' in user_data:
+                user.first_name = user_data['first_name']
+            if 'last_name' in user_data:
+                user.last_name = user_data['last_name']
+            if 'email' in user_data:
+                user.email = user_data['email']
+            user.save()
+
         # Update the Profile fields
         return super().update(instance, validated_data)
 
