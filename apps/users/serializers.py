@@ -1,11 +1,10 @@
 # users/serializers.py
-
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import Profile
 
 class UserSerializer(serializers.ModelSerializer):
-    """Serializer for the User model. Username is read-only."""
+    """Read-only serializer for the User model."""
     class Meta:
         model = User
         fields = ['id', 'username', 'first_name', 'last_name', 'email']
@@ -13,34 +12,50 @@ class UserSerializer(serializers.ModelSerializer):
 
 class ProfileSerializer(serializers.ModelSerializer):
     """
-    Serializer for Profile that allows updating of the nested User fields:
-    first_name, last_name, and email.
+    Flattened serializer for Profile that includes user fields at the same level.
+    So we expect JSON like:
+        {
+          "first_name": "...",
+          "last_name": "...",
+          "email": "...",
+          "phone": "...",
+          "address": "...",
+          "bio": "...",
+          "image": ...
+        }
     """
-    # 'source="user.first_name"' => these fields must be in "user": {...} in JSON
-    first_name = serializers.CharField(source='user.first_name')
-    last_name = serializers.CharField(source='user.last_name')
-    email = serializers.EmailField(source='user.email', required=False, allow_blank=True, allow_null=True)
+    first_name = serializers.CharField(required=False)
+    last_name = serializers.CharField(required=False)
+    email = serializers.EmailField(required=False, allow_blank=True, allow_null=True)
 
     class Meta:
         model = Profile
-        fields = ['id', 'first_name', 'last_name', 'email', 'phone', 'address', 'image', 'bio']
+        fields = [
+            'id',
+            'first_name',
+            'last_name',
+            'email',
+            'phone',
+            'address',
+            'image',
+            'bio'
+        ]
         read_only_fields = ['id']
 
     def update(self, instance, validated_data):
-        # Extract nested user data if present
-        user_data = validated_data.pop('user', None)
         user = instance.user
+        
+        # Extract user-related fields if present
+        if 'first_name' in validated_data:
+            user.first_name = validated_data.pop('first_name')
+        if 'last_name' in validated_data:
+            user.last_name = validated_data.pop('last_name')
+        if 'email' in validated_data:
+            user.email = validated_data.pop('email')
+        
+        user.save()  # Save any user changes
 
-        if user_data:  # Only update user if we have user_data
-            if 'first_name' in user_data:
-                user.first_name = user_data['first_name']
-            if 'last_name' in user_data:
-                user.last_name = user_data['last_name']
-            if 'email' in user_data:
-                user.email = user_data['email']
-            user.save()
-
-        # Update the Profile fields
+        # Now update the Profile fields normally
         return super().update(instance, validated_data)
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -62,7 +77,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         user = User.objects.create(**validated_data)
         user.set_password(password)
         user.save()
-        # Profile is auto-created via signal; update image if provided.
+        # If an image was provided, set it on the profile
         if image:
             user.profile.image = image
             user.profile.save()

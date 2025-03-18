@@ -4,24 +4,21 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
-
 from .models import Profile
 from .serializers import ProfileSerializer, RegisterSerializer
-from .permissions import IsOwnerOrReadOnlyProfile
 
 class ProfileViewSet(viewsets.ModelViewSet):
     """
     API endpoint for a user to view or update their own profile.
+    Flattened user fields (first_name, last_name, email) at the top level.
     """
     serializer_class = ProfileSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # Restrict queryset to only the current user's profile.
         return Profile.objects.filter(user=self.request.user)
-    
+
     def list(self, request, *args, **kwargs):
-        # There's only one profile per user. We fetch it.
         profile = self.get_queryset().first()
         if not profile:
             return Response({"detail": "No profile found."}, status=404)
@@ -29,7 +26,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def perform_update(self, serializer):
-        # Enforce that the profile belongs to the current user.
+        # Ensure the user is correct
         serializer.save(user=self.request.user)
 
 class RegisterView(APIView):
