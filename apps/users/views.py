@@ -14,7 +14,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
     API endpoint for a user to view or update their own profile.
     """
     serializer_class = ProfileSerializer
-    permission_classes = [IsAuthenticated, IsOwnerOrReadOnlyProfile]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         # Restrict queryset to only the current user's profile.

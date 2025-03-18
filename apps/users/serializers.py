@@ -24,6 +24,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ['id', 'first_name', 'last_name', 'email', 'phone', 'address', 'image', 'bio']
+        read_only_fields = ['id']
 
     def update(self, instance, validated_data):
         # Extract nested user data
