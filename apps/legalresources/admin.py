@@ -4,9 +4,10 @@ from .models import LegalResource, FavoriteResource
 
 @admin.register(LegalResource)
 class LegalResourceAdmin(admin.ModelAdmin):
-    list_display = ('id', 'title', 'created_at', 'image_tag')
+    list_display = ('id', 'title', 'created_at', 'image_tag', 'file_link')
     search_fields = ('title',)
     list_filter = ('created_at',)
+    ordering = ('id',)
 
     def image_tag(self, obj):
         if obj.image:
@@ -16,6 +17,15 @@ class LegalResourceAdmin(admin.ModelAdmin):
             )
         return "-"
     image_tag.short_description = 'Image'
+    
+    def file_link(self, obj):
+        if obj.file:
+            return format_html(
+                '<a href="{}" target="_blank">Download File</a>',
+                obj.file.url
+            )
+        return "-"
+    file_link.short_description = 'File'
 
 @admin.register(FavoriteResource)
 class FavoriteResourceAdmin(admin.ModelAdmin):

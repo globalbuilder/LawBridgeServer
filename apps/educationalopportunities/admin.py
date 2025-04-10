@@ -7,6 +7,7 @@ class EducationalOpportunityAdmin(admin.ModelAdmin):
     list_display = ('id', 'title', 'start_date', 'end_date', 'location', 'created_at', 'image_tag')
     search_fields = ('title', 'location')
     list_filter = ('start_date', 'end_date', 'created_at')
+    ordering = ('id',)
 
     def image_tag(self, obj):
         if obj.image:
