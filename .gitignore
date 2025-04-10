@@ -1,0 +1,16 @@
+# Python bytecode files
+*.pyc
+__pycache__/
+
+# Virtual environment folder
+venv/
+
+# Django local files
+db.sqlite3
+*.log
+
+# Media files (if you store uploaded files locally)
+media/
+
+# Environment files (should not be committed)
+.env
